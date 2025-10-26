@@ -38,7 +38,7 @@ async def api_create_poll(poll_in: PollCreate, session: Session = Depends(get_se
     }}
     # broadcast to connected websocket clients
     await manager.broadcast(payload)
-    return {"ok": True, "poll_id": poll.id}
+    return {"ok": True, "poll_id": poll.id, "token": poll.token}
 
 @app.get("/polls")
 def api_get_polls(session: Session = Depends(get_session)):
@@ -73,13 +73,49 @@ async def api_like(poll_id: int, session: Session = Depends(get_session)):
     await manager.broadcast(payload)
     return {"ok": True}
 
+from fastapi import Query
 @app.delete("/polls/{poll_id}")
-async def api_delete_poll(poll_id: int, session: Session = Depends(get_session)):
-    if not delete_poll(session, poll_id):
+async def api_delete_poll(poll_id: int, token: str = Query(...), session: Session = Depends(get_session)):
+    poll = await run_in_threadpool(get_poll, session, poll_id)
+    if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
+    if poll.token != token:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    deleted = await run_in_threadpool(delete_poll, session, poll_id)
     payload = {"type": "poll_deleted", "poll_id": poll_id}
     await manager.broadcast(payload)
     return {"ok": True}
+
+# Edit poll endpoint
+from fastapi import Body
+@app.put("/polls/{poll_id}")
+async def api_edit_poll(
+    poll_id: int,
+    body: dict = Body(...),
+    session: Session = Depends(get_session)
+):
+    question = body.get("question")
+    options = body.get("options", [])
+    token = body.get("token")
+    if not question or not isinstance(options, list) or len(options) < 2:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    poll = await run_in_threadpool(get_poll, session, poll_id)
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    if poll.token != token:
+        raise HTTPException(status_code=403, detail="Invalid token")
+    from .crud import edit_poll
+    edited = await run_in_threadpool(edit_poll, session, poll_id, question, options)
+    # Broadcast and return the canonical updated poll
+    poll_obj = await run_in_threadpool(get_poll, session, poll_id)
+    payload = {"type": "poll_edited", "poll": {
+        "id": poll_obj.id,
+        "question": poll_obj.question,
+        "likes": poll_obj.likes,
+        "options": [{"id": o.id,"text":o.text,"votes":o.votes} for o in poll_obj.options]
+    }}
+    await manager.broadcast(payload)
+    return {"ok": True, "poll": payload["poll"]}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

@@ -17,7 +17,7 @@ export function TrashIcon({
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={color}
       stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
@@ -25,7 +25,8 @@ export function TrashIcon({
       className={className}
       {...props}
     >
-      <path d="M3 0c-.55 0-1 .45-1 1H1c-.55 0-1 .45-1 1h7c0-.55-.45-1-1-1H5c0-.55-.45-1-1-1zM1 3v4.81c0 .11.08.19.19.19h4.63c.11 0 .19-.08.19-.19V3h-1v3.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5V3h-1v3.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5V3h-1z"/>
+      {/* Trash (filled) path */}
+      <path d="M9 3h6a1 1 0 0 1 1 1v1h2a1 1 0 0 1 0 2h-1l-1 12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 7H2a1 1 0 1 1 0-2h2V4a1 1 0 0 1 1-1h1zm2 4v10h2V7h-2z" />
     </svg>
   );
 }

@@ -15,4 +15,5 @@ class Poll(SQLModel, table=True):
     question: str
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     likes: int = 0
+    token: str = Field(default="", index=True)
     options: List[Option] = Relationship(back_populates="poll")

@@ -20,6 +20,7 @@ class PollOut(BaseModel):
     id: int
     question: str
     likes: int
+    token: str
     options: List[OptionOut]
 
     class Config:

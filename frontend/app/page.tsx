@@ -5,7 +5,6 @@ export default function QuickPollUI() {
     <main className="p-6 max-w-4xl mx-auto">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">QuickPoll — Live</h1>
-        <div className="text-sm text-muted-foreground">Realtime • Responsive • Accessible</div>
       </header>
 
       <PollContainer />

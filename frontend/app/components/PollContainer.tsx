@@ -5,7 +5,7 @@ import { PollCard } from "@/app/components/PollCard";
 import { PollForm } from "@/app/components/PollForm";
 
 type Option = { id: number; text: string; votes: number };
-type Poll = { id: number; question: string; options: Option[]; likes: number };
+type Poll = { id: number; question: string; options: Option[]; likes: number; token?: string };
 
 export function PollContainer() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -27,8 +27,8 @@ export function PollContainer() {
   // WebSocket updates
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const url = process.env.NEXT_PUBLIC_WS_URL ?? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
-    const ws = new WebSocket(url);
+    const wsBase = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000";
+    const ws = new WebSocket(`${wsBase}/ws`);
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data);
@@ -38,6 +38,10 @@ export function PollContainer() {
           setPolls((prev) => prev.map((p) => p.id === msg.poll.id ? { ...p, likes: msg.poll.likes } : p));
         } else if (msg.type === 'poll_created') {
           setPolls((prev) => [msg.poll, ...prev]);
+        } else if (msg.type === 'poll_edited') {
+          setPolls((prev) => prev.map((p) => p.id === msg.poll.id ? msg.poll : p));
+        } else if (msg.type === 'poll_deleted') {
+          setPolls((prev) => prev.filter((p) => p.id !== msg.poll_id));
         }
       } catch (e) { console.error(e); }
     };
@@ -60,8 +64,11 @@ export function PollContainer() {
   };
 
   const handleDelete = async (pollId: number) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem(`poll_token_${pollId}`) : null;
     setPolls((prev) => prev.filter((p) => p.id !== pollId));
-    try { await fetch(`${apiBase}/polls/${pollId}`, { method: 'DELETE' }); } catch (e) { console.error(e); }
+    try {
+      await fetch(`${apiBase}/polls/${pollId}?token=${encodeURIComponent(token ?? "")}`, { method: 'DELETE' });
+    } catch (e) { console.error(e); }
   };
 
   return (
@@ -70,7 +77,7 @@ export function PollContainer() {
         <div className="sticky top-4">
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Create New Poll</h2>
-            <PollForm onCreate={(p) => setPolls((s) => [p, ...s])} />
+            <PollForm onCreated={(id, token) => setPolls((prev) => prev.map(p => p.id === id ? { ...p, token } : p))} />
           </div>
         </div>
       </div>
@@ -92,6 +99,10 @@ export function PollContainer() {
                   onVote={(optId) => handleVote(p.id, optId)} 
                   onLike={() => handleLike(p.id)} 
                   onDelete={() => handleDelete(p.id)} 
+                  onEdit={(updated) => {
+                    if (!updated || updated.id === undefined) return;
+                    setPolls((prev) => prev.map((poll) => poll.id === updated.id ? { ...poll, ...updated as Partial<Poll> } : poll));
+                  }}
                 />
               ))
             )}

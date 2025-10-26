@@ -9,7 +9,7 @@ import { TrashIcon } from "@/components/ui/icons/oi-trash";
 type Option = { id: number; text: string; votes: number };
 type Poll = { id: number; question: string; options: Option[]; likes: number };
 
-export function PollForm({ onCreate }: { onCreate: (p: Poll) => void }) {
+export function PollForm({ onCreated }: { onCreated?: (id: number, token: string) => void }) {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<string[]>(["", ""]);
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -34,18 +34,13 @@ export function PollForm({ onCreate }: { onCreate: (p: Poll) => void }) {
       });
       if (!res.ok) throw new Error("Create failed");
       const data = await res.json();
-      // optimistic local add — server broadcasts as well, but immediate UI feedback is nice
-      const newPoll: Poll = { 
-        id: data.poll_id ?? Date.now(), 
-        question: question.trim(), 
-        options: cleanOpts.map((t, idx) => ({ 
-          id: Date.now() + idx, 
-          text: t, 
-          votes: 0 
-        })), 
-        likes: 0 
-      };
-      onCreate(newPoll);
+      // Store token in localStorage for ownership
+      if (data.poll_id && data.token) {
+        localStorage.setItem(`poll_token_${data.poll_id}`, data.token);
+        // Notify parent in the same tab so UI can pick up the token immediately
+        if (onCreated) onCreated(data.poll_id, data.token);
+      }
+      // Clear the form - poll will be added via WebSocket
       setQuestion("");
       setOptions(["", ""]);
     } catch (e) {
