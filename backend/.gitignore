@@ -3,6 +3,8 @@
 _pycache__/
 *.pyc
 .env
+.env.local
+.env.production
 .vscode/
 instance/
 .coverage

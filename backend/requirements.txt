@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
 sqlmodel
-databases    # optional
-httpx        # optional for server tests
+psycopg2-binary
 python-dotenv
+databases[postgresql]
