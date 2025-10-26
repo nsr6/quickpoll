@@ -1,8 +1,11 @@
-# QuickPoll - Real-time opinion polling platform
+# QuickPoll - Real-time Opinion Polling Platform
 
-Polling app built on Next.js frontend and FastAPI backend. 
+Polling app built with Next.js (frontend) and FastAPI (backend).  
 
-Live demo: https://quickpoll-seven.vercel.app/
+**Live demo:** [https://quickpoll-seven.vercel.app](https://quickpoll-seven.vercel.app)  
+**Demo video:** [View on Google Drive](https://drive.google.com/file/d/1BR72VnSfqVSx3ghebKtU84wjdUU-LTtB/view?usp=sharing)
+
+> **Note:** The Render backend may be temporarily unavailable due to inactivity on the free tier. Please refer to the demo video in such cases.
 
 ---
 
