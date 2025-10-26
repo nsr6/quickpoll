@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+databases    # optional
+httpx        # optional for server tests
+python-dotenv
